@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>RideShare</title>
+  <link rel="stylesheet" href="./css/setup.css">
+  <link rel="stylesheet" href="./css/styles.css">
+  <link href='https://fonts.googleapis.com/css?family=Signika:400,700|Knewave|Arvo:400,700italic' rel='stylesheet' type='text/css'>
+  <script src='https://api.tiles.mapbox.com/mapbox.js/v2.2.3/mapbox.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox.js/v2.2.3/mapbox.css' rel='stylesheet' />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <header class='row'>
+    <nav>
+    <h1><span class="word1 animated slideInLeft">Ride</span><span class="word2 animated slideInRight">Share</span></h1>
+      <ul>
+        <li>
+          <label id="loginLabel" for='loginCheckbox'>Login</label>
+          <input type='checkbox' id='loginCheckbox' class='hiddenCheckbox'>
+          <div id='loginDropdown' class='dropdown'>
+            <form id="loginForm" accept-charset="UTF-8">
+              <input type="text" placeholder="Email" name="email">
+              <input type="password" placeholder="Password" name="password"><br>
+              <input class="myButton" type="submit" id="sign-in" value="Sign In">
+            </form>
+          </div> 
+        </li>
+        <li >
+          <label id='logout'>Logout</label>
+        </li>
+        <li>
+          <label for='registrationCheckbox' id="registrationLabel">Register</label>
+          <input type='checkbox' id='registrationCheckbox' class='hiddenCheckbox'>
+          <div id='registrationDropdown' class='dropdown'>
+            <form id="registrationForm" accept-charset="UTF-8">
+              <input  type="text" placeholder="Email" name="email">
+              <input type="password" placeholder="Password" name="password">
+              <input type="password" placeholder="Confirm Password" name="password_confirmation"><br>
+              <input class="myButton" type="submit" id="registerButton" value="Register">
+            </form>
+          </div> 
+        </li>
+      </ul>   
+    </nav>
+  </header>
+
+  <main class='row'>
+  
+    <aside class='column span_3_of_12 sidebar rides'>
+      <h2>Rides</h2>
+        <input type="button"  class="myButton" id="showAll" value="See All">
+     
+        <input type="button" id="newRideButton" class="hidden myButton" value="New Ride">
+        <div> 
+          <form id="createRideForm" class="hidden">
+            <h2>New Ride</h2>
+            <h3>Destination</h3>
+            <input type="text" class="Address" id="newDestinationAddress" name="daddress" placeholder="Destination address">
+            <label for="newDestinationLat">Latitude:</label>
+            <input type="text" class="latLng" id="newDestinationLat" name="dlat" placeholder="Lat">
+            <label for="newDestinationLng">Longitude:</label>
+            <input type="text" class="latLng" id="newDestinationLng" name="dlng" placeholder="Lng">
+            <label for:"newStartAddress">Start From:</label>
+            <input type="text" class="Address" id="newStartAddress" name="saddress" placeholder="Starting address">
+            <label for="newStartLat">Latitude:</label>
+            <input type="text" class="latLng" id="newStartLat" name="slat" placeholder="lat">
+            <label for="newStartLng">Longitude:</label>
+            <input type="text" class="latLng"  id="newStartLng" name="slng" placeholder="Lng">
+            <label for="newLength">Length of Trip:</label>
+            <input type="text" name="length" placeholder="3 hours">
+            <label for="departureDateTime">Departure Date / Time</label>
+            <input type="text" name="departure_date_time" placeholder="MM/DD/YYYY 2:00pm">
+            <label for="event">Event:</label>
+            <input type="text" name="event" placeholder="National Square Dance Convention">
+            <label for="seats">Seats available:</label>
+            <input type="text" name="spots_available" placeholder="3">
+            <div class="buttons">
+              <input type="submit" id="submitRideButton" class="myButton" value="Create Ride">
+              <input type="button" class="myButton" id="cancelNewRide" value="Cancel">
+            </div>  
+          </form>
+        </div>
+        <div id="editRideFormGoesHere">
+        </div>
+        <div id="ridesListHere">
+        </div>
+
+    </aside>
+  
+
+    <div id='map' class='map column span_9_of_12'> 
+    <pre class='ui-output hidden'>
+      <div id='output' >
+      </div>
+      <input type='button' class="myButton hidden" id='sendToDestination' value='Send to Destination'> 
+      <input type='button' class="myButton hidden" id='sendToStart' value='Send to Starting Address'>
+    </pre>
+  </main>
+ 
+
+</body>
+
+<!-- Handlebars Templates -->
+<script id="ridesList" type="text/x-handlebars-template">
+
+{{#each rides as |ride|}}
+<div class="ride" id="ride{{ride.id}}">
+  <ul>
+    <li><span class ="title">Going to: </span>{{ride.destination.address}}</li>
+    <li><span class ="title">From: </span>{{ride.start_point.address}}</li>
+    <li><span class ="title">Date: </span>{{ride.departure_date_time}}</li>
+  </ul>
+  {{#if ride.edited}}
+  <div id='more{{ride.id}}'class='hidden'>
+    <ul>
+      <li><span class ="title">Seats Available:</span>{{ride.seats_left}}</li>
+      {{#if ride.event}}<li><span class ="title">Event: </span>{{ride.event}}</li>{{/if}}
+      <li><span class ="title">Driver:</span> {{ride.owner.email}}</li>
+      <li>
+      {{#if ride.passengers}}
+        <span class ="title">Passengers:</span>
+         {{#if ride.isOwner}}
+         <ul>
+            {{#each passengers as |passenger|}}
+              <li>{{passenger.email}}</li>
+            {{/each}} 
+          </ul>
+        {{else}}
+          {{ride.numberOfPassengers}}
+        {{/if}}
+      </li>
+      {{/if}}
+    </ul>
+  </div>
+</div> 
+<div class ="buttons"> 
+  <input type='button' value='More' id="more{{ride.id}}button" class='showMoreButton myButton' data-id='{{ride.id}}'>
+
+  {{#if ride.seats_left}}
+  {{#unless ride.isOwner}}
+  {{#unless ride.isPassenger}}
+    <input type='button' class="joinRideButton myButton" value='Join Ride' data-id='{{ride.id}}'>
+  {{/unless}}
+  {{/unless}}  
+  {{/if}}
+  {{#if ride.isPassenger}}
+  <input type='button' class="leaveRideButton myButton" value='Leave Ride' data-id='{{ride.id}}'>
+  {{/if}}
+  {{#if ride.isOwner}}
+    <input type='button' value='Edit Ride' class='editRideButton myButton' data-id='{{ride.id}}'>
+    <input type='button' value='Delete Ride' class='deleteRideButton myButton' data-id='{{ride.id}}'>
+  {{/if}}
+  </div>
+</div>   
+{{else}}
+</div> 
+<div class="buttons"></div> 
+{{/if}}
+
+
+
+{{/each}}
+
+</script>
+
+<script id="createEditRideForm" type="text/x-handlebars-template">
+<form id="editRideForm" data-id="{{id}}">
+    <h2>Edit Ride</h2>
+    <h3>Destination</h3>
+    <input type="text" class="Address" id="editDestinationAddress" name="daddress" value="{{destination.address}}">
+    <label for="destinationLat">Latitude:</label>
+    <input type="text" class="latLng" id="editDestinationLat" name="dlat" value="{{destination.lat}}">
+    <label for="destinationLat">Longitude:</label>
+    <input type="text" class="latLng" id="editDestinationLng" name="dlng" value="{{destination.lng}}">
+    <h3>Start From:</h3>
+    <input type="text" class="Address" id="editStartAddress" name="saddress" value="{{start_point.address}}">
+    <label for="startLat">Latitude:</label>
+    <input type="text" class="latLng" id="editStartLat" name="slat" value="{{start_point.lat}}">
+    <label for="startLat">Longitude:</label>
+    <input type="text" class="latLng"  id="editStartLng" name="slng" value="{{start_point.lng}}">
+    <label for="length">Length of Trip:</label>
+    <input type="text" name="length" placeholder="3 hours" value="{{length}}">
+    <input type="text" name="departure_date_time" placeholder="MM/DD/YYYY 2:00pm" value="{{departure_date_time}}">
+    <label for="event">Event:</label>
+    <input type="text" name="event" placeholder="National Square Dance Convention" value="{{event}}">
+    <label>Passengers: {{numberOfPassengers}}</label>
+    <br/>
+    <label for="seats">Seats available:</label>
+    <input type="text" name="seats_left" value="{{seats_left}}">
+    <div class="buttons">
+      <input type="submit" class="myButton" data-id="{{id}}" value="Edit Ride">
+      <input type="button" class="myButton" id="cancelEditRide" value="Cancel">
+    </div>
+  </form>
+</script>
+
+<!-- jQuery -->
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" integrity="sha256-ivk71nXhz9nsyFDoYoGf2sbjrR9ddh+XDkCcfZxjvcM=" crossorigin="anonymous"></script>
+
+<!-- Handlebars -->
+<script src="./assets/handlebars-v4.0.4.js"></script>
+
+<!-- Local scripts -->
+<script src="./js/api.js" type = "application/javascript"></script>
+
+<script src="./js/models.js" type = "application/javascript"></script>
+<script src="./js/app.js" type = "application/javascript"></script>
+<script src="./js/login_registration.js" type = "application/javascript"></script>
+
+
+</html>
